@@ -72,6 +72,16 @@ RATES: dict[str, Rate] = {
 }
 
 
+def _as_int(value: object) -> int:
+    """A token count, or 0 for anything that is not one.
+
+    Defensive on purpose. This is telemetry: a malformed or absent usage field should cost a
+    line of the report, not raise inside a review that has already been paid for and is about
+    to be posted.
+    """
+    return value if isinstance(value, int) and not isinstance(value, bool) else 0
+
+
 def _normalise(model: str | None) -> str:
     """Strip publisher/model prefixes and lowercase, so Vertex and AI Studio ids agree."""
     if not model:
@@ -149,13 +159,20 @@ def estimate_cost(usage: dict, model: str | None, config: dict | None = None, to
         if listed.note:
             caveats.append(f"{listed.label}: {listed.note}.")
 
-    full_price_input = max(0, usage.get("fresh_tokens", 0)) + max(0, usage.get("comment_history_tokens", 0))
-    cached = max(0, usage.get("cached_tokens", 0))
-    output_tokens = max(0, usage.get("candidates_tokens", 0))
+    full_price_input = max(0, _as_int(usage.get("fresh_tokens"))) + max(0, _as_int(usage.get("comment_history_tokens")))
+    cached = max(0, _as_int(usage.get("cached_tokens")))
+    # Thinking tokens are reported separately and bill at the OUTPUT rate. Without this a
+    # run with a reasoning budget reports a total well below what it actually cost, which is
+    # the failure mode this module exists to prevent.
+    thoughts = max(0, _as_int(usage.get("thoughts_tokens")))
+    output_tokens = max(0, _as_int(usage.get("candidates_tokens"))) + thoughts
 
     uncached_cost = full_price_input / 1e6 * rate.input
     cached_cost = cached / 1e6 * rate.input * (rate.cache_read or DEFAULT_CACHE_READ_MULTIPLIER)
     output_cost = output_tokens / 1e6 * rate.output
+
+    if thoughts > 0:
+        caveats.append(f"{thoughts:,} reasoning tokens are billed at the output rate and are included above.")
 
     if cached > 0:
         caveats.append(

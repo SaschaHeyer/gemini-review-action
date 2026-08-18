@@ -33,6 +33,7 @@ from gemini_review import (
     build_codebase_context,
     build_pr_diff_prompt,
     build_prompt,
+    build_thinking_config,
     count_text_tokens,
     estimate_cost,
     extract_response_text_or_raise,
@@ -226,6 +227,7 @@ def main():
         client = genai.Client(api_key=gemini_api_key)
 
     config = load_config()
+    thinking_config = build_thinking_config(types, config)
     system_instruction = load_system_instruction(repository, pr_number, config)
 
     # Load workspace rules (AGENTS.md, etc.)
@@ -363,6 +365,7 @@ def main():
             cached_content=cached_content_name,
             response_mime_type="application/json",
             response_schema=ReviewResult,
+            thinking_config=thinking_config,
         )
     else:
         gen_config = types.GenerateContentConfig(
@@ -370,6 +373,7 @@ def main():
             tools=tools,
             response_mime_type="application/json",
             response_schema=ReviewResult,
+            thinking_config=thinking_config,
         )
 
     print("Generating code review...", file=sys.stderr)
@@ -394,6 +398,7 @@ def main():
                 tools=tools,
                 response_mime_type="application/json",
                 response_schema=ReviewResult,
+                thinking_config=thinking_config,
             )
             response = client.models.generate_content(
                 model=model_name,
@@ -409,6 +414,8 @@ def main():
         prompt_tokens = usage.prompt_token_count or 0
         cached_tokens = getattr(usage, "cached_content_token_count", 0) or 0
         candidates_tokens = usage.candidates_token_count or 0
+        raw_thoughts = getattr(usage, "thoughts_token_count", 0)
+        thoughts_tokens = raw_thoughts if isinstance(raw_thoughts, int) else 0
         total_tokens = usage.total_token_count or 0
 
         fresh_tokens = max(0, prompt_tokens - cached_tokens - comment_history_tokens)
@@ -418,6 +425,7 @@ def main():
             "prompt_tokens": prompt_tokens,
             "cached_tokens": cached_tokens,
             "candidates_tokens": candidates_tokens,
+            "thoughts_tokens": thoughts_tokens,
             "comment_history_tokens": comment_history_tokens,
             "fresh_tokens": fresh_tokens,
             "total_tokens": total_tokens,

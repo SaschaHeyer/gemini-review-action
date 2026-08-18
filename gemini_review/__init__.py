@@ -44,6 +44,10 @@ from .skills import (
     load_skill_instructions,
     parse_skill_metadata,
 )
+from .thinking import (
+    build_thinking_config,
+    resolve_thinking_budget,
+)
 from .utils import (
     _normalize_model_name,
     count_text_tokens,
@@ -64,6 +68,8 @@ from .utils import (
 )
 
 __all__ = [
+    "build_thinking_config",
+    "resolve_thinking_budget",
     "Cost",
     "Promo",
     "RATES",

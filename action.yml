@@ -44,6 +44,13 @@ inputs:
     description: 'Fetch and include prior PR review threads and conversation comments in prompt context'
     required: false
     default: 'true'
+  thinking_budget:
+    description: >-
+      Reasoning token budget for the review call. Unset leaves the API default. -1 lets the model
+      choose, 0 disables reasoning, a positive number is a ceiling. Thinking tokens bill at the
+      output rate and are included in the reported cost.
+    required: false
+    default: ''
   persona:
     description: 'Persona overlay for reviewer (straight, dazbo, palpatine, rick)'
     required: false
@@ -74,6 +81,7 @@ runs:
         GEMINI_TIMEOUT: ${{ inputs.timeout }}
         GEMINI_INCLUDE_COMMENT_HISTORY: ${{ inputs.include_comment_history }}
         GEMINI_PERSONA: ${{ inputs.persona }}
+        GEMINI_THINKING_BUDGET: ${{ inputs.thinking_budget }}
         GEMINI_SKIP_INLINE_SUGGESTIONS: ${{ inputs.skip_inline_suggestions }}
         GITHUB_REPOSITORY: ${{ github.repository }}
 

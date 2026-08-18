@@ -148,3 +148,25 @@ class TestRateTable:
         for key in RATES:
             assert key == key.lower()
             assert "models/" not in key
+
+
+class TestThinkingTokens:
+    """Reasoning tokens are reported separately and bill at the output rate."""
+
+    def test_thoughts_are_priced_at_the_output_rate(self):
+        u = usage(fresh=0, output=1_000)
+        u["thoughts_tokens"] = 3_000
+        cost = estimate_cost(u, "gemini-3.7-flash", today=date(2026, 8, 17))
+        assert cost.output == pytest.approx(4_000 / 1e6 * 3.75)
+
+    def test_a_run_without_thinking_is_unchanged(self):
+        before = estimate_cost(usage(fresh=10, output=100), "gemini-3.7-flash", today=date(2026, 8, 17))
+        u = usage(fresh=10, output=100)
+        u["thoughts_tokens"] = 0
+        assert estimate_cost(u, "gemini-3.7-flash", today=date(2026, 8, 17)).total == before.total
+
+    def test_the_caveat_names_the_reasoning_tokens(self):
+        u = usage(output=10)
+        u["thoughts_tokens"] = 2_500
+        cost = estimate_cost(u, "gemini-3.7-flash", today=date(2026, 8, 17))
+        assert any("2,500 reasoning tokens" in c for c in cost.caveats)

@@ -17,8 +17,17 @@ and documentation completeness.
 2. **Schema Fields:**
    - `summary`: A comprehensive, high-level summary of the Pull Request's objective, architectural impact, and 
      overall quality (fewer than 10 sentences). Be sure to cover code changes, documentation/blog updates, and overall project implications.
+     Describe what the change DOES. Do not assess whether a practice is correctly or completely applied
+     unless you have verified it across the changed files, and put such assessments in
+     `general_feedback` or `comments`, where they carry a location, rather than in the summary.
    - `resolved_items`: A list of previously raised review feedback comments/threads from prior iterations that have been resolved or addressed in this PR update.
    - `general_feedback`: A list of general observations, positive highlights, or patterns.
+     GROUND EVERY ITEM. Each entry must be supported by something you can point at in the diff or the
+     attached file contents, and must name it inline as `path:line` or `path`. If you cannot point at
+     it, omit the entry rather than writing it. This applies to PRAISE as much as to criticism: do not
+     commend a practice unless you have checked every instance of it in the changed files. A confident
+     compliment that is not true of the code is worse than silence, because a reader trusts it and
+     stops checking. Where a good practice is applied inconsistently, say so and name the exception.
    - `comments`: A list of inline review comments, where each comment must provide:
      - `path`: The relative path of the file being reviewed.
      - `line`: The exact line number in the RIGHT (new/modified) or LEFT (deleted) version of the file where the comment applies. If `start_line` is specified, `line` is the end line number of the range.
