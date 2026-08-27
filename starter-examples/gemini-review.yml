@@ -24,6 +24,24 @@ jobs:
         contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
       )
     runs-on: ubuntu-latest
+
+    # Re-reviewing on every push is the point, but a burst of pushes should not mean a burst of
+    # reviews. Each one is a full billed call.
+    #
+    # This MUST sit on the job, not on the workflow. At workflow level the group is evaluated when
+    # the run is QUEUED, before any job `if` is considered, and an `issue_comment` payload has no
+    # top-level `pull_request` — so the key falls through to `github.event.issue.number`, which is
+    # the same number as the PR. Any comment on the PR would therefore land in the same group and
+    # `cancel-in-progress` would kill the review already in flight, before the job could skip
+    # itself. Down here, cancellation only happens once a job is actually going to run.
+    #
+    # Key on the PR number alone. Adding `github.event_name` splits `pull_request` and
+    # `issue_comment` into separate queues, so a `/gemini-review` comment would run alongside an
+    # in-flight push review instead of superseding it. One review per PR at a time, newest wins.
+    concurrency:
+      group: gemini-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
+
     permissions:
       contents: read
       pull-requests: write
