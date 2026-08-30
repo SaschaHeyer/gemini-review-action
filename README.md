@@ -717,7 +717,7 @@ Follow this step-by-step workflow:
 
 #### Step 1. Bump the Version and Synchronise the Lockfile
 
-Update the version number in [pyproject.toml](file:///home/dazbo/localdev/gemini-review-action/pyproject.toml) to reflect the new release (e.g. `1.3.1`). Then, synchronise your lockfile to match the updated version:
+Update the version number in [pyproject.toml](pyproject.toml) to reflect the new release (e.g. `1.3.1`). Then, synchronise your lockfile to match the updated version:
 
 ```bash
 # After modifying pyproject.toml
