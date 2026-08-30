@@ -279,13 +279,13 @@ Not in the examples, but a natural addition to avoid paying for three reviews wh
 jobs:
   review:
     concurrency:
-      group: gemini-review-${{ github.event.pull_request.number || github.event.issue.number }}-${{ github.event_name }}
+      group: gemini-review-${{ github.event.pull_request.number || github.event.issue.number }}
       cancel-in-progress: true
 ```
 
-Workflow-level `concurrency` is evaluated when a run is **queued**, before any job `if` is evaluated. An `issue_comment` payload has no top-level `pull_request`, so a key like `${{ github.event.pull_request.number || github.event.issue.number }}` falls through to the issue number, which for a pull request is the same number. Both trigger types then share one group.
+**Job level, not workflow level.** Workflow-level `concurrency` is evaluated when a run is **queued**, before any job `if` is evaluated. An `issue_comment` payload has no top-level `pull_request`, so the key falls through to the issue number, which for a pull request is the same number. Both trigger types then share one group, and **any comment on the PR cancels a review that is still running**, before the job gets to check whether the comment was a `/gemini-review` command at all.
 
-The result is that **any comment on the PR cancels a review that is still running**, before the job gets to check whether the comment was a `/gemini-review` command at all. Keeping it at job level, and including `github.event_name` in the key, avoids both halves.
+**Key on the PR number alone.** An earlier version of this section suggested adding `${{ github.event_name }}` to the key. That is wrong, and it is wrong in the opposite direction: it splits `pull_request` and `issue_comment` into separate queues, so a `/gemini-review` comment runs *alongside* an in-flight push review rather than superseding it. Two reviews, two bills, duplicate comments on the same PR. One review per PR at a time, newest wins.
 
 ### Seeing It In Action
 
