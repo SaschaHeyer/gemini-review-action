@@ -54,6 +54,14 @@ class Rate:
 # Keys are matched after normalising the model id (see `_normalise`), so
 # "models/gemini-3.7-flash" and "publishers/google/models/gemini-3.7-flash" both resolve.
 RATES: dict[str, Rate] = {
+    "gemini-3.8-flash": Rate(
+        input=1.50,
+        output=7.50,
+        label="Gemini 3.8 Flash",
+        # Same introductory structure as 3.7: half price until the end of 2026.
+        promo=Promo(input=0.75, output=3.75, ends_after="2026-12-31"),
+        note="standard tier; batch and flex are half again, priority is higher",
+    ),
     "gemini-3.7-flash": Rate(
         input=1.50,
         output=7.50,

@@ -136,6 +136,19 @@ class TestUsd:
         assert usd(amount) == expected
 
 
+class TestGemini38Flash:
+    """3.8 shipped priced identically to 3.7, including the same promo end date."""
+
+    def test_it_is_priced_and_not_reported_as_unknown(self):
+        cost = estimate_cost(usage(fresh=1_000_000), "gemini-3.8-flash", today=date(2026, 8, 29))
+        assert cost.rate is not None, "an unpriced model reports tokens and no cost"
+        assert cost.total == pytest.approx(0.75)
+
+    def test_the_promo_expires_with_the_year(self):
+        after = estimate_cost(usage(fresh=1_000_000), "gemini-3.8-flash", today=date(2027, 1, 1))
+        assert after.total == pytest.approx(1.50)
+
+
 class TestRateTable:
     def test_every_promo_is_cheaper_than_its_standard_rate(self):
         """A promo dearer than the standard rate would mean the two were swapped."""
