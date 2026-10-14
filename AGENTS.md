@@ -60,9 +60,9 @@ To execute `gemini_pr_review.py` or `gemini_issue_triage.py` locally for testing
 1. **Environment Variables**:
    Load `GEMINI_API_KEY` dynamically from the local `.env` file before invoking Python (do NOT hardcode API key values):
    ```bash
-   export GEMINI_API_KEY=$(grep '^GEMINI_API_KEY=' .env | cut -d= -f2- | tr -d '"' | tr -d "'")
+   export GEMINI_API_KEY=$(grep -E '^(export[[:space:]]+)?GEMINI_API_KEY=' .env | cut -d= -f2- | tr -d '"' | tr -d "'")
    ```
-   If a `.env` file is not available, ask the user for the key.
+   Alternatively, if `.env` already uses `export GEMINI_API_KEY=...`, you can run `source .env` or pass `--env-file .env` to `uv run`. If a `.env` file is not available, ask the user for the key.
 
    
 2. **Git Diff Context for Local PR Reviews**:
@@ -70,7 +70,7 @@ To execute `gemini_pr_review.py` or `gemini_issue_triage.py` locally for testing
    - To review uncommitted or untracked local changes during dry-run testing, either stage the changes (`git add .`) or pass a mock diff in a short Python launcher script. The user may have forgotten to stage untracked changes.
 
 3. **Execution Command**:
-   - Always run using the virtual environment interpreter (`.venv/bin/python`) or `uv run python`.
+   - Always run using the virtual environment interpreter (`.venv/bin/python`) or `uv run --locked --project . python`.
    - Set `WaitMsBeforeAsync: 10000` (10 seconds) on `run_command` calls to allow the LLM response generation and Developer Knowledge API lookup to complete synchronously within the turn.
 
 4. **Context Cache Testing & Verification**:
@@ -84,10 +84,11 @@ ALWAYS count exactly how many times you executed a review, to allow the user to 
 
 Before pushing a change of anything non-trivial:
 - Check if any documentation should be updated based on this PR and update accordingly. This includes (but is not limited to) README.md, AGENTS.md, and ARCHITECTURE.md.
-- Update the version number in `pyproject.toml`. Verify your proposed new version number before proceeding.
+- Update the version number in `pyproject.toml` and run `uv lock` (because `action.yml` enforces `uv run --locked`, `uv.lock` MUST stay synchronised with `pyproject.toml`). Verify your proposed new version number before proceeding.
 
 ## Release Notes & Tagging Standards
 
 When preparing GitHub releases:
 - **Rolled-In Highlights with Collapsible Drop-Downs**: In release notes, roll in summaries of previous recent releases under `## 📜 Rolled-In Highlights from Previous Releases` using collapsible HTML `<details><summary><strong>vX.Y.Z: Title</strong></summary>...</details>` blocks (following the v1.6.1 style).
 - **Floating Tag Maintenance**: Always create the specific versioned tag (e.g. `v1.6.3`) AND force-update the major floating tag (e.g. `git tag -fa v1 -m "Update v1 tag to v1.6.3" && git push origin v1 --force`) so standard action consumers tracking `@v1` automatically receive updates.
+
